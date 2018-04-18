@@ -1,21 +1,46 @@
 import paho.mqtt.client as mqtt
+import re
+import inspect
 
-# The callbacimport paho.mqtt.client as mqtt
+clients_count = 0
+clients_done = 0
 
-# The callback for when the client receives a CONNACK response from the server.
+# The callback for when the client is connected to a server.
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
-
-    # Subscribing in on_connect() means that if we lose the connection and
-    # reconnect then subscriptions will be renewed.
-    client.subscribe("Output")
-    file = open("test.png", "rb")
-    read = file.read()
-    client.publish("InputFile", read, 0)
+    client.subscribe("$SYS/broker/clients/active")
+    client.subscribe("TaskFile")
+    client.subscribe("DataFile")
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print(msg.topic+" "+str(msg.payload))
+    #log metadata
+    if msg.topic == "TaskFile":
+        file = open("TaskFile", "wb")
+        file.write(msg.payload)
+        file.close()
+
+    if msg.topic == "DataFile":
+        file = open("DataFile", "wb")
+        file.write(msg.payload)
+        file.close()
+        # client.publish("InputDataFile", msg.payload)
+
+    if msg.topic == "$SYS/broker/clients/active":
+        clients_count = int(msg.payload) - 2
+        if clients_count > 0:
+            client.publish("InputTaskFile", msg.payload)
+            split_file()
+            
+            for i in range(1..clients_count + 1):
+                client.publish("InputDataFile" + i, msg.payload)
+                client.subscribe("node" + i + "_output")
+
+    if msg.topic == re.match(r'.*_output', msg.topic):
+        file = open(msg.topic, "wb")
+        file.write(msg.payload)
+        file.close()
+        count += 1
 
 client = mqtt.Client()
 client.on_connect = on_connect
