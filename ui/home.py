@@ -1,11 +1,18 @@
 from appJar import gui
+import sys
+sys.path.insert(0, '/home/nikolatz/Edge-Computing-Interpretation/mainNode')
+from main_node import runMain
 def press(button) :
-    if button=="Send the Work":
-        fileToWorkOn = open(app.getEntry("f1"), "r")
-        script = open(app.getEntry("f2"), "r")
-        print (fileToWorkOn.read())
-        print (script.read())
-
+    if button=="Send the work":
+        # fileToWorkOn = open(app.getEntry("f1"), "r")
+        # script = open(app.getEntry("f2"), "r")
+        result = runMain(app.getEntry("f1"), app.getEntry("f2"))
+        print(result)
+        app.startSubWindow("result", modal=True)
+        app.addMessage("mess", """You can put a lot of text in this widget.
+The text will be wrapped over multiple lines.
+It's not possible to apply different styles to different words.""")
+    app.showSubWindow("result")
 app = gui()
 app.setBg("DarkKhaki")
 
