@@ -1,22 +1,35 @@
 from appJar import gui
+import paho.mqtt.client as mqtt
 import sys
-sys.path.insert(0, '/home/nikolatz/Edge-Computing-Interpretation/mainNode')
-from main_node import runMain
+# sys.path.insert(0, '/home/nikolatz/Edge-Computing-Interpretation/mainNode')
+# from main_node import runMain
 def press(button) :
     if button=="Send the work":
-        # fileToWorkOn = open(app.getEntry("f1"), "r")
-        # script = open(app.getEntry("f2"), "r")
-        result = runMain(app.getEntry("f1"), app.getEntry("f2"))
-        print(result)
-        app.startSubWindow("result", modal=True)
-        app.addMessage("mess", """You can put a lot of text in this widget.
-The text will be wrapped over multiple lines.
-It's not possible to apply different styles to different words.""")
-    app.showSubWindow("result")
+        # result = 1 runMain(app.getEntry("f1"), app.getEntry("f2"))
+        client.publish("DataFile", app.getEntry("f1"))
+        client.publish("ScriptFile", app.getEntry("f2"))
+        client.publish("StartWork")
+
+def on_connect(client, userdata, flags, rc):
+    client.subscribe("Result")
+
+def on_message(client, userdata, msg):
+    if msg.topic == "Result":
+        file = open("result.txt", "w")
+        file.write(msg.payload.decode("utf-8"))
+        file.close()
+        app.openPage("Welcome to projecto", 1)
+        app.stopPage()
+
 app = gui()
 app.setBg("DarkKhaki")
 
 app.startPagedWindow("Welcome to projecto")
+
+app.startPage()
+app.addLabel("w1", "You have to choose two files")
+app.stopPage()
+
 app.startPage()
 app.addLabel("l1", "upload a file")
 app.setLabelBg("l1", "green")
@@ -40,5 +53,12 @@ app.setButtonSticky("Send the work", "both")
 app.stopPage()
 
 app.stopPagedWindow()
+
+client = mqtt.Client()
+client.on_connect = on_connect
+client.on_message = on_message
+
+client.connect("192.168.0.109", 1883, 60)
+client.loop_start()
 # start the GUI
 app.go()
